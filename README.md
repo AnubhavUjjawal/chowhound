@@ -8,7 +8,8 @@
     - Can add new ingestor types.
     - Can create/update ingestion pipeline.
     - Can scale horizontally on multiple servers very easily.
-    - Multiple feedback sources of same source type for same tenant
+    - Multiple feedback sources of same source type for same tenant.
+    - Can enrich data ingested at any step of the pipeline.
 
 ## Introduction:
 This framework works on 2 interfaces: `IngestionWriter` and `Ingestor`. 
@@ -17,7 +18,7 @@ This framework works on 2 interfaces: `IngestionWriter` and `Ingestor`.
 
 ### How it all fits in:
 - Our data fetching services, example: `DiscourseScraper` are composed with an implementation of `IngestionWriter` interface. That allows them the flexibility to switch Ingestion Writers if needed, without changing their own code, as well as code reuse.
-- If our DataFetchingServices use an `IngestionWriter` (for example, see [`SimpleHttpIngestionWriter`](./pkg/ingestion/simple-http-ingestion.go)) which sends data to an `Ingestor`, then the ingestor recieves the data, handles it appropriately and then sends it to its own `IngestionWriter`. That `IngestionWriter`, depending on the concrete implementation can choose to save the data to a database / forward it to another ingestor based on custom logic / drop the data.
+- If our DataFetchingServices use an `IngestionWriter` (for example, see [`SimpleHttpIngestionWriter`](./pkg/ingestion/simple-http-ingestion.go)) which sends data to an `Ingestor`, which receives it, handles it appropriately and then sends it to its own `IngestionWriter`. That `IngestionWriter`, depending on the concrete implementation can choose to save the data to a database / forward it to another ingestor based on custom logic.
 - Suppose we add another Ingestor, which uses GRPC, then we just need to create concrete implementions `GRPCIngestionWriter` and `GRPCIngestor`, and we can switch them out with other implementations.
 - This way, we have abstracted out the communication, allowing us to focus on core logic of "Data fetching", "Data enrichment" etc.
 
@@ -27,11 +28,21 @@ This framework works on 2 interfaces: `IngestionWriter` and `Ingestor`.
 ![complex-usecase](./images/complex-usecase.png)
 
 
+### Data enrichment
+After the data is scraped/fetched, data can only be sent in our pipeline in format of `IngestionData`. However,  all fields in `IngestionData` might not
+be known/available to us at that time. In that scenario, known data can be filled and other data dumped in `Data` field as well as `Metadata` fields.
+Our ingestion system can very easily adapt to this by having some preprocessing ingestors which ingest half filled data, enriches it by deriving/adding remaining attributes before passing it on to the main ingestion pipeline.
+
+For example: Let's say a tenant has multiple apps, but only one twitter account for all the apps. When we fetch twitter data, it might not be possible to know which app the tweet is about. In that case, we can fix the above use case scenario like this:
+
+![complex-usecase-2](./images/complex-usecase-2.png)
+
+
 ## Decisions
 
 ### Push vs Pull
 It depends on the implementation of our Ingestor and IngestorWriter Interface, we support both. For example, in `SQS`, pull based mechanism is used.
-For `http`, the data is being pushed to our ingestors. To me, using a msg queue like SQS makes the most "perfect sense", so that ingestors can process data at their own speed. So pull based approach would work better in data intensive scenarios.
+For `http`, the data is being pushed to our ingestors. To me, using a msg queue like SQS makes the "perfect sense", so that ingestors can process data at their own speed. So pull based approach would work better in data intensive scenarios.
 
 ### Metadata Ingestion:
 `metadata` attributes are always growing and all of them cannot be thought about at the initial stage. So it makes sense for it to be a custom JSON value with unknown attributes. Additionally, we add `metadata_type` as an additional attribute seperately, which lets us distinguish between different metadata types, to allow processing of data using metadata values present, or enriching of metadata using ingestors.
