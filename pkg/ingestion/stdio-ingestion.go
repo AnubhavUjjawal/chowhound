@@ -11,3 +11,7 @@ func (w *StdoutIngestionWriter) Write(ctx context.Context, data IngestionData) (
 	fmt.Println("received data: ", data)
 	return nil, nil
 }
+
+func NewStdoutIngestionWriter() *StdoutIngestionWriter {
+	return &StdoutIngestionWriter{}
+}

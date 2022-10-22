@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 )
 
 type SimpleHttpIngestionWriter struct {
@@ -15,17 +16,22 @@ type SimpleHttpIngestionWriter struct {
 }
 
 func (h *SimpleHttpIngestionWriter) Write(ctx context.Context, data IngestionData) (interface{}, error) {
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 	postData, err := json.Marshal(data)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("POST", h.url, bytes.NewBuffer(postData))
+	req, err := http.NewRequest(http.MethodPost, h.url, bytes.NewBuffer(postData))
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	// We can check response status codes here for errors, but I am leaving that for the sake of simplicity
+	req = req.WithContext(ctxWithTimeout)
+	// We can check response status codes here for errors, but it is a "Simple"HttpIngestionWriter after all
 	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
 	return res.StatusCode, err
 }
 
@@ -65,6 +71,7 @@ func (h *SimpleHttpIngestor) setupHandler(writer IngestionWriter) http.Handler {
 
 func (h *SimpleHttpIngestor) setupMux(writer IngestionWriter) *http.ServeMux {
 	mux := http.NewServeMux()
+	// We should add healthchecks, but is out of scope for "Simple"HttpIngestor for now.
 	mux.Handle(h.path, h.setupHandler(writer))
 	return mux
 }

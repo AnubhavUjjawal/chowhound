@@ -8,5 +8,6 @@ func main() {
 	path := "/ingest"
 	port := 5000
 	ingestor := ingestion.NewSimpleHttpIngestor(path, port)
-	ingestor.SetupAndListen(&ingestion.StdoutIngestionWriter{})
+	writer := ingestion.NewStdoutIngestionWriter()
+	ingestor.SetupAndListen(writer)
 }

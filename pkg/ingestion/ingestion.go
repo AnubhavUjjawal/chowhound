@@ -29,6 +29,7 @@ type IngestionData struct {
 
 	// metadata for the data, for example, discourse post id, github issue id
 	// it is an open ended field, and the format is up to the source.
+	// in database, it should be stored as a json field (Ex: jsonb in postgres), or a json encoded string.
 	Metadata interface{} `json:"metadata" db:"metadata"`
 
 	// type of Metadata object, so that ingestor service know how to process or ignore it.

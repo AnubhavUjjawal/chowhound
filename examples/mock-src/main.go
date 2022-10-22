@@ -3,11 +3,14 @@ package main
 
 import (
 	"context"
+	"log"
+	"os"
 	"strconv"
 	"time"
 
 	"github.com/AnubhavUjjawal/chowhound/pkg/ingestion"
 	"github.com/google/uuid"
+	_ "github.com/joho/godotenv/autoload"
 )
 
 type MockSrcWithHttpIngestionWriter struct {
@@ -17,22 +20,24 @@ type MockSrcWithHttpIngestionWriter struct {
 func (r *MockSrcWithHttpIngestionWriter) Run() error {
 	ctx := context.Background()
 	for i := 0; i < 10; i++ {
-		_, err := r.Write(ctx, ingestion.IngestionData{
+		data := ingestion.IngestionData{
 			Uuid:         uuid.New().String(),
 			CreatedAt:    time.Now(),
 			UpdatedAt:    time.Now(),
 			SourceType:   "MockSrcWithHttpIngestionWriter",
 			SourceId:     "MockSrcWithHttpIngestionWriterExample",
-			Metadata:     nil,
+			Metadata:     map[string]interface{}{"lorem": "ipsum dolor sit amet"},
 			MetadataType: ingestion.METADATA_TYPE_NULL,
 			Data:         "Hello World",
 			DataId:       strconv.Itoa(i),
 			Lang:         "en",
 			TenantId:     "mock-tenant-001",
-		})
-		// log.Println(reflect.TypeOf(data), data, err)
+		}
+		log.Println("Writing data using ingestion writer", data)
+		_, err := r.Write(ctx, data)
 		if err != nil {
-			return err
+			log.Println("Error writing data using ingestion writer", err)
+			// return err
 		}
 		// mocking data generation delay
 		time.Sleep(1 * time.Second)
@@ -42,6 +47,10 @@ func (r *MockSrcWithHttpIngestionWriter) Run() error {
 
 func main() {
 	url := "http://localhost:5000/ingest"
+	newUrl, hasUrlInEnv := os.LookupEnv("INGESTOR_URL")
+	if hasUrlInEnv {
+		url = newUrl
+	}
 
 	src := MockSrcWithHttpIngestionWriter{
 		IngestionWriter: ingestion.NewSimpleHttpIngestionWriter(url),
