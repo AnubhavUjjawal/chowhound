@@ -1,0 +1,26 @@
+version: '3.1'
+
+services:
+
+  db:
+    container_name: db
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: example
+      POSTGRES_USER: example
+    volumes:
+      - ./create-table.sql:/docker-entrypoint-initdb.d/create-table.sql
+    ports:
+      - "5432:5432"
+  
+  ingestor:
+    build:
+      context: ../../..
+      dockerfile: examples/postgres-ingestion/scripts/Dockerfile
+    restart: always
+    environment:
+      POSTGRES_URI: postgres://example:example@db:5432/example?sslmode=disable
+      POSTGRES_TABLE_NAME: ingestion_data
+    ports:
+      - 5000:5000
