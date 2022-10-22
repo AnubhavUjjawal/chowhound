@@ -69,12 +69,13 @@ func (h *SimpleHttpIngestor) setupMux(writer IngestionWriter) *http.ServeMux {
 	return mux
 }
 
-func (h *SimpleHttpIngestor) SetupAndListen(handler IngestionWriter) error {
-	if handler == nil {
+func (h *SimpleHttpIngestor) SetupAndListen(writer IngestionWriter) error {
+	if writer == nil {
 		return errors.New("handler cannot be nil")
 	}
-	mux := h.setupMux(handler)
+	mux := h.setupMux(writer)
 	server := h.getServer(fmt.Sprintf("%d", h.port), mux)
+	log.Println("starting server on port", h.port)
 	if err := server.ListenAndServe(); err != nil {
 		if !errors.Is(err, http.ErrServerClosed) {
 			log.Printf("error running http server: %s\n", err)
