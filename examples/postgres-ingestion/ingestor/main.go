@@ -12,7 +12,7 @@ func main() {
 	path := "/ingest"
 	port, err := strconv.Atoi(os.Getenv("PORT"))
 	if err != nil {
-		log.Println("Error converting port to int", err)
+		log.Fatalln("Error converting port to int", err)
 	}
 	postgresUri := os.Getenv("POSTGRES_URI")
 	postgresTableName := os.Getenv("POSTGRES_TABLE_NAME")
@@ -24,5 +24,5 @@ func main() {
 	// postgresTableName := "ingestion_data"
 	ingestor := ingestion.NewSimpleHttpIngestor(path, port)
 	writer := ingestion.NewSimplePostgresIngestionWriter(postgresUri, postgresTableName)
-	ingestor.SetupAndListen(writer)
+	ingestor.SetupAndListen(nil, writer)
 }

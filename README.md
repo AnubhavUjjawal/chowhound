@@ -14,7 +14,7 @@
 ## Introduction:
 This framework works on 2 interfaces: `IngestionWriter` and `Ingestor`. 
 - `IngestionWriter` interface defines a `Write` method which allows concrete implementations to write the data to a database, repository or forward data to an `Ingestor`. 
-- `Ingestor` interface defines a `ListenAndServe` method which allows concrete implementations to recieve data and handle it with help of `IngestionWriter`.
+- `Ingestor` interface defines a `ListenAndServe` method which allows concrete implementations to receive data, process it and handle it with help of `IngestionWriter`.
 
 ### How it all fits in:
 - Our data fetching services, example: `DiscourseScraper` are composed with an implementation of `IngestionWriter` interface. That allows them the flexibility to switch Ingestion Writers if needed, without changing their own code, as well as code reuse.
@@ -25,6 +25,7 @@ This framework works on 2 interfaces: `IngestionWriter` and `Ingestor`.
 ![basic-example](./images/basic-http-ingestion.png)
 
 - A more complex use case is shown below, where different data fetching services publish to an SQS queue using `SQSIngestionWriter`. The `SQSIngestor` receives it and a custom writer forwards the data to an `HttpIngestor` as well as writes the data to `Redshift`.
+
 ![complex-usecase](./images/complex-usecase.png)
 
 
@@ -64,6 +65,7 @@ Idempotency is an implmentation detail left to `IngestionWriter`. There are diff
 
     ```sh
     cd examples/postgres-ingestion/scripts
+    docker-compose build
     docker-compose up
     ```
 
@@ -72,4 +74,26 @@ Idempotency is an implmentation detail left to `IngestionWriter`. There are diff
     go run examples/mock-src/main.go
     ```
 
+### Data Enrichment Demo
+- A demo in which random limited data is available. An `HttpIngestor` processes the data and sends it to our `HttpIngestor` created in our earlier demo. To run it:
+
+    ```sh
+    # Make sure the final step in the ingestors is running, i.e
+    # http ingestor with postgres writer
+    cd examples/postgres-ingestion/scripts
+    docker-compose build
+    docker-compose up
+
+    # Now, in new tab, from root dir, let's go to our data enrichment ingestion example.
+    # Run the server using
+    cd examples/data-enrichment-ingestion/scripts
+    docker-compose build
+    docker-compose up
+
+
+    # In another terminal, from root directory, run the data generator
+    go run examples/data-enrichment-ingestion/mock-src/main.go
+    ```
+
+PS: tests have not been written as the examples shown are non production ready POCs of actual implementation which should be done.
 

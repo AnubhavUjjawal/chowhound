@@ -13,8 +13,11 @@ services:
       - ./create-table.sql:/docker-entrypoint-initdb.d/create-table.sql
     ports:
       - "5432:5432"
+    networks:
+      - ingestor-network
   
   ingestor:
+    container_name: ingestor
     build:
       context: ../../..
       dockerfile: examples/postgres-ingestion/scripts/Dockerfile
@@ -24,3 +27,9 @@ services:
       POSTGRES_TABLE_NAME: ingestion_data
     ports:
       - 5000:5000
+    networks:
+      - ingestor-network
+
+networks:
+  ingestor-network:
+    name: ingestor-network

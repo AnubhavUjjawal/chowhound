@@ -1,0 +1,18 @@
+version: '3.1'
+
+services:
+  enrichment-ingestor:
+    build:
+      context: ../../..
+      dockerfile: examples/data-enrichment-ingestion/scripts/Dockerfile
+    restart: always
+    environment:
+      PORT: 3000
+      DEST_URL: http://ingestor:5000/ingest
+    ports:
+      - 3000:3000
+
+networks:
+  default:
+    external:
+      name: ingestor-network
