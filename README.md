@@ -75,7 +75,7 @@ Idempotency is an implmentation detail left to `IngestionWriter`. There are diff
     ```
 
 ### Data Enrichment Demo
-- A demo in which random limited data is available. An `HttpIngestor` processes the data and sends it to our `HttpIngestor` created in our earlier demo. To run it:
+- A demo in which limited data with few fields missing is available. An `HttpIngestor` processes the data, adds new fields and sends it to our `HttpIngestor` created in our earlier demo. To run it:
 
     ```sh
     # Make sure the final step in the ingestors is running, i.e
